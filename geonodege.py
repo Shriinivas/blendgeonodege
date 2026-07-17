@@ -67,13 +67,23 @@ def setup_modifier_drivers(obj):
                 if prop_name not in obj:
                     obj[prop_name] = 0.0
 
-                data_path = f'["{identifier}"]'
-                try:
-                    mod.driver_remove(data_path)
-                except TypeError:
-                    pass
+                if hasattr(mod, "properties"):
+                    # Blender 5.2+ API
+                    data_path = f'modifiers["{mod.name}"].properties.inputs["{identifier}"]["value"]'
+                    try:
+                        obj.driver_remove(data_path)
+                    except TypeError:
+                        pass
+                    fcurve = obj.driver_add(data_path)
+                else:
+                    # Legacy Blender API (pre-5.2)
+                    data_path = f'["{identifier}"]'
+                    try:
+                        mod.driver_remove(data_path)
+                    except TypeError:
+                        pass
+                    fcurve = mod.driver_add(data_path)
 
-                fcurve = mod.driver_add(data_path)
                 driver = fcurve.driver
                 driver.type = "AVERAGE"
                 var = driver.variables.new()
